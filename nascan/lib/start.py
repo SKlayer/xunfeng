@@ -1,6 +1,6 @@
 # coding:utf-8
 import sys
-import Queue
+import queue as Queue
 import threading
 import scan
 import icmp
@@ -31,8 +31,8 @@ class ThreadNum(threading.Thread):
                 _s.config_ini = self.config_ini  # 提供配置信息
                 _s.statistics = self.statistics  # 提供统计信息
                 _s.run()
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
             finally:
                 self.queue.task_done()
 
@@ -102,9 +102,9 @@ class start:
             m_scan = __import__("masscan")
             result = m_scan.run(ip, masscan_path, masscan_rate)
             return result
-        except Exception, e:
-            print e
-            print 'No masscan plugin detected'
+        except Exception as e:
+            print(e)
+            print('No masscan plugin detected')
 
     def get_ip_list(self, ip):
         ip_list_tmp = []
@@ -114,14 +114,14 @@ class start:
             [str(x / (256 ** i) % 256) for i in range(3, -1, -1)])
         if '-' in ip:
             ip_range = ip.split('-')
-            ip_start = long(iptonum(ip_range[0]))
-            ip_end = long(iptonum(ip_range[1]))
+            ip_start = iptonum(ip_range[0])
+            ip_end = iptonum(ip_range[1])
             ip_count = ip_end - ip_start
             if ip_count >= 0 and ip_count <= 655360:
                 for ip_num in range(ip_start, ip_end + 1):
                     ip_list_tmp.append(numtoip(ip_num))
             else:
-                print 'IP format error'
+                print('IP format error')
         else:
             ip_split = ip.split('.')
             net = len(ip_split)
@@ -138,7 +138,7 @@ class start:
             elif net == 4:
                 ip_list_tmp.append(ip)
             else:
-                print "IP format error"
+                print("IP format error")
         return ip_list_tmp
 
     def get_ac_ip(self, ip_list):
@@ -146,6 +146,6 @@ class start:
             s = icmp.Nscan()
             ipPool = set(ip_list)
             return s.mPing(ipPool)
-        except Exception, e:
-            print 'The current user permissions unable to send icmp packets'
+        except Exception as e:
+            print('The current user permissions unable to send icmp packets')
             return ip_list

@@ -1,4 +1,5 @@
-import socket,thread,datetime,time
+import socket,datetime,time
+import _thread as thread
 query_history = []
 url_history = []
 def web_server():
@@ -27,9 +28,9 @@ def web_server():
                     if query_str in query_raw:
                         query_history.remove(query_raw)
                         html = "YES"
-            print datetime.datetime.now().strftime('%m-%d %H:%M:%S') + " " + str(addr[0]) +' web query: ' + path
+            print(datetime.datetime.now().strftime('%m-%d %H:%M:%S') + " " + str(addr[0]) +' web query: ' + str(path))
             raw = "HTTP/1.0 200 OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s" %(len(html),html)
-            conn.send(raw)
+            conn.send(raw.encode("utf-8"))
             conn.close()
         except:
             pass
@@ -41,6 +42,6 @@ if __name__=="__main__":
         try:
             recv,addr = dns.recvfrom(1024)
             if recv not in query_history:query_history.append(recv)
-            print datetime.datetime.now().strftime('%m-%d %H:%M:%S') + " " +str(addr[0]) +' Dns Query: ' + recv
-        except Exception,e:
-            print e
+            print(datetime.datetime.now().strftime('%m-%d %H:%M:%S') + " " +str(addr[0]) +' Dns Query: ' + recv.decode())
+        except Exception as e:
+            print(e)

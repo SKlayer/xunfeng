@@ -21,14 +21,14 @@ def check(host, port, timeout):
         url = "http://%s:%d" % (host, int(port))
         res = requests.get(url + '/axis2/services/listServices', timeout=timeout)
         res_code = res.status_code
-        res_html = res.content
+        res_html = res.text
         if int(res_code) == 404: return
         m = re.search('\/axis2\/services\/(.*?)\?wsdl">.*?<\/a>', res_html)
         if m.group(1):
             server_str = m.group(1)
             read_url = url + '/axis2/services/%s?xsd=../conf/axis2.xml' % (server_str)
             res = requests.get(read_url, timeout=timeout)
-            res_html = res.content
+            res_html = res.text
             if 'axisconfig' in res_html:
                 user = re.search('<parameter name="userName">(.*?)</parameter>', res_html)
                 password = re.search('<parameter name="password">(.*?)</parameter>', res_html)

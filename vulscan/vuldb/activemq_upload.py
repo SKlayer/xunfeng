@@ -35,7 +35,7 @@ def check(ip, port, timeout):
         s.recv(1024)
         s.close()
         url = 'http://' + ip + ":" + str(port) + '/styles/%s.txt'%(filename)
-        res_html = requests.get(url,timeout=timeout).content
+        res_html = requests.get(url,timeout=timeout).text
         if 'xxscan0' in res_html:
             return u"存在任意文件上传漏洞，" + url
     except:

@@ -3,12 +3,13 @@ import mongo
 import log
 import socket
 import datetime
-import urllib2
+import requests
 import re
 import time
 import ssl
 import gzip
-import StringIO
+from io import StringIO
+
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context  # 忽略证书错误
@@ -49,14 +50,14 @@ class scan:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.connect((self.ip, self.port))
             time.sleep(0.2)
-        except Exception, e:
+        except Exception:
             return
         try:
             self.banner = sock.recv(1024)
             sock.close()
             if len(self.banner) <= 2:
                 self.banner = 'NULL'
-        except Exception, e:
+        except Exception:
             self.banner = 'NULL'
         log.write('portscan', self.ip, self.port, None)
         banner = ''
@@ -64,7 +65,7 @@ class scan:
         time_ = datetime.datetime.now()
         date_ = time_.strftime('%Y-%m-%d')
         try:
-            banner = unicode(self.banner, errors='replace')
+            banner = self.banner, errors='replace'
             if self.banner == 'NULL':
                 banner = ''
             mongo.NA_INFO.insert({"ip": self.ip, "port": self.port,
@@ -127,31 +128,19 @@ class scan:
         title_str, html = '', ''
         try:
             if self.port == 443:
-                info = urllib2.urlopen("https://%s:%s" %
+                info = requests.get("https://%s:%s" %
                                        (self.ip, self.port), timeout=self.timeout)
             else:
-                info = urllib2.urlopen("http://%s:%s" %
+                info = requests.get("http://%s:%s" %
                                        (self.ip, self.port), timeout=self.timeout)
-            html = info.read()
+            html = info.text
             header = info.headers
-        except urllib2.HTTPError, e:
-            html = e.read()
-            header = e.headers
         except:
             return
+
         if not header:
             return
-        # 解压gzip
-        if 'Content-Encoding' in header and 'gzip' in header['Content-Encoding']:
-            html_data = StringIO.StringIO(html)
-            gz = gzip.GzipFile(fileobj=html_data)
-            html = gz.read()
-        try:
-            html_code = self.get_code(header, html).strip()
-            if html_code and len(html_code) < 12:
-                html = html.decode(html_code).encode('utf-8')
-        except:
-            pass
+
         try:
             title = re.search(r'<title>(.*?)</title>', html, flags=re.I | re.M)
             if title:
@@ -228,7 +217,7 @@ class scan:
             tag = map(self.discern, [
                       'Discern_cms', 'Discern_con', 'Discern_lang'], [url, url, url])
             return filter(None, tag)
-        except Exception, e:
+        except Exception:
             return
 
     def discern(self, dis_type, domain):
@@ -238,13 +227,10 @@ class scan:
         else:
             protocol = "http://"
         try:
-            req = urllib2.urlopen(protocol + domain, timeout=self.timeout)
+            req = requests.get(protocol + domain, timeout=self.timeout)
             header = req.headers
-            html = req.read()
-        except urllib2.HTTPError, e:
-            html = e.read()
-            header = e.headers
-        except Exception, e:
+            html = req.text
+        except Exception:
             return
         for mark_info in self.config_ini[dis_type]:
             if mark_info[1] == 'header':
@@ -253,7 +239,7 @@ class scan:
                         return
                     if re.search(mark_info[3], header[mark_info[2]], re.I):
                         return mark_info[0]
-                except Exception, e:
+                except Exception:
                     continue
             elif mark_info[1] == 'file':
                 if mark_info[2] == 'index':
@@ -262,22 +248,21 @@ class scan:
                             return
                         if re.search(mark_info[3], html, re.I):
                             return mark_info[0]
-                    except Exception, e:
+                    except Exception:
                         continue
                 else:
                     if mark_info[2] in file_tmp:
                         re_html = file_tmp[mark_info[2]]
                     else:
                         try:
-                            re_html = urllib2.urlopen(protocol + domain + "/" + mark_info[2],
-                                                      timeout=self.timeout).read()
-                        except urllib2.HTTPError, e:
-                            re_html = e.read()
-                        except Exception, e:
+                            re_html = requests.get(protocol + domain + "/" + mark_info[2],
+                                                      timeout=self.timeout).text
+
+                        except Exception:
                             return
                         file_tmp[mark_info[2]] = re_html
                     try:
                         if re.search(mark_info[3], re_html, re.I):
                             return mark_info[0]
-                    except Exception, e:
-                        print mark_info[3]
+                    except Exception:
+                        print(mark_info[3])
