@@ -4,12 +4,16 @@ import _ctypes
 import json
 import platform
 import os
-import urllib2
-import sys
+import requests
+import time
 
-from urllib import urlretrieve
 import zipfile
 
+import logging
+logging.basicConfig(level = logging.INFO)
+logger = logging.getLogger("KunPeng")
+logger.setLevel(logging.DEBUG)
+logger.info("KUNPENG")
 
 class kunpeng:
     def __init__(self):
@@ -22,37 +26,39 @@ class kunpeng:
             'linux': '.so'
         }
         self._load_kunpeng()
-    
+
+    def do_upgrade(self):
+        logger.info('Starting check KUNPENG Version')
+        current_version = self.get_version().decode()
+        release_version = self._get_release_latest()
+        version = release_version["tag_name"]
+        logger.info('Current=%s, Latest=%s . %s' % (current_version, version, "do upgrade" if current_version != version else "doesn't need upgrade"))
+        if version != current_version:
+            path = self._down_release(release_version['tag_name'])
+            self.close()
+            z_file = zipfile.ZipFile(path, 'r')
+            dat = z_file.read('kunpeng_c' + self.suf_map[self.system])
+            new_lib = self.pwd + '/kunpeng_v' + version + self.suf_map[self.system]
+            lib_f = open(new_lib, 'wb')
+            lib_f.write(dat)
+            lib_f.close()
+            z_file.close()
+
+            os.remove(self.pwd + '/' + self._get_lib_path())
+            print('update success', version)
+            self._load_kunpeng()
+        else:
+            return
+
+
+
+
+
     def _get_lib_path(self):
         file_list = os.listdir(self.pwd)
         for v in file_list:
             if 'kunpeng' in v and os.path.splitext(v)[1] == self.suf_map[self.system]:
                 return v
-
-    def check_version(self):
-        print 'check version'
-        release = self._get_release_latest()
-        # print(release)
-        if release['tag_name'] != self.get_version():
-            print 'new version', release['tag_name']
-            self._down_release(release['tag_name'])
-            return release
-
-    def update_version(self, version):
-        self.close()
-        os.remove(self.pwd + '/' + self._get_lib_path())
-        save_path = self.pwd + \
-            '/kunpeng_{}_v{}.zip'.format(self.system, version)
-        z_file = zipfile.ZipFile(save_path, 'r')
-        dat = z_file.read('kunpeng_c' + self.suf_map[self.system])
-        print len(dat)
-        new_lib = self.pwd + '/kunpeng_v' + version + self.suf_map[self.system]
-        lib_f = open(new_lib,'wb')
-        lib_f.write(dat)
-        lib_f.close()
-        z_file.close()
-        print 'update success',version
-        self._load_kunpeng()
 
     def close(self):
         if self.system == 'windows':
@@ -63,25 +69,45 @@ class kunpeng:
             _ctypes.dlclose(handle)
 
     def _down_release(self, version):
-        print 'kunpeng update ', version
+
         save_path = self.pwd + \
-            '/kunpeng_{}_v{}.zip'.format(self.system, version)
+                    '/kunpeng_{}_v{}.zip'.format(self.system, version)
         down_url = 'https://github.com/opensec-cn/kunpeng/releases/download/{}/kunpeng_{}_v{}.zip'.format(
             version, self.system.lower(), version)
-        print 'url', down_url
-        urlretrieve(down_url, save_path, self._callbackinfo)
+        logger.info('kunpeng update %s, url=%s starting downloading' % (version, down_url))
+        if os.path.exists(save_path):
+            return save_path
 
-    def _callbackinfo(self, down, block, size):
-        per = 100.0*(down*block)/size
-        if per > 100:
-            per = 100
-        print '%.2f%%' % per
+        def downloadFile(name, url):
+            headers = {'Proxy-Connection': 'keep-alive'}
+            r = requests.get(url, stream=True, headers=headers)
+            length = float(r.headers['content-length'])
+            f = open(name, 'wb')
+            count = 0
+            count_tmp = 0
+            time1 = time.time()
+            for chunk in r.iter_content(chunk_size=512):
+                if chunk:
+                    f.write(chunk)
+                    count += len(chunk)
+                    if time.time() - time1 > 2:
+                        p = count / length * 100
+                        speed = (count - count_tmp) / 1024 / 1024 / 2
+                        count_tmp = count
+                        print(name + ': ' + formatFloat(p) + '%' + ' Speed: ' + formatFloat(speed) + 'M/S')
+                        time1 = time.time()
+            f.close()
+
+        def formatFloat(num):
+            return '{:.2f}'.format(num)
+
+        downloadFile(save_path,down_url)
+        return save_path
+
 
     def _get_release_latest(self):
-        body = urllib2.urlopen(
-            'https://api.github.com/repos/opensec-cn/kunpeng/releases/latest').read()
-        release = json.loads(body)
-        return release
+        req = requests.get('https://api.github.com/repos/opensec-cn/kunpeng/releases/latest')
+        return req.json()
 
     def get_version(self):
         return self.kunpeng.GetVersion()
@@ -98,7 +124,7 @@ class kunpeng:
         self.kunpeng.Check.restype = c_char_p
         self.kunpeng.SetConfig.argtypes = [c_char_p]
         self.kunpeng.GetVersion.restype = c_char_p
-        print self.get_version()
+        print(self.get_version())
 
     def get_plugin_list(self):
         result = self.kunpeng.GetPlugins()
@@ -128,8 +154,4 @@ class kunpeng:
 
 if __name__ == '__main__':
     kp = kunpeng()
-    print(kp.pwd)
-    print(kp._get_lib_path())
-    # new_release = kp.check_version()
-    # if new_release:
-    kp.update_version('20190225')
+    kp.do_upgrade()
