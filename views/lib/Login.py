@@ -15,8 +15,8 @@ def logincheck(f):
                     return redirect(url_for('Login'))
             else:
                 return redirect(url_for('Login'))
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             return redirect(url_for('Error'))
 
     return wrapper

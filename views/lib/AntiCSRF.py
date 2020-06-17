@@ -13,8 +13,8 @@ def anticsrf(f):
                 return f(*args, **kwargs)
             else:
                 return redirect(url_for('NotFound'))
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             return redirect(url_for('Error'))
 
     return wrapper

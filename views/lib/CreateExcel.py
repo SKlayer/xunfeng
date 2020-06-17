@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import xlwt
-import StringIO
+from io import StringIO
 
 
 # 将数据保存成excel
@@ -15,7 +15,7 @@ def write_data(data, tname):
             table.write(l, c, line[c])
             c += 1
         l += 1
-    sio = StringIO.StringIO()
+    sio = StringIO()
     file.save(sio)
     return sio
 

