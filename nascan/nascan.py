@@ -1,6 +1,7 @@
 # coding:utf-8
 # author:wolf@YSRC
-import thread
+import _thread as thread
+import time
 from lib.common import *
 from lib.start import *
 if __name__ == "__main__":
@@ -33,5 +34,5 @@ if __name__ == "__main__":
                 s.statistics = STATISTICS
                 s.run()
             time.sleep(60)
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
