@@ -1,6 +1,8 @@
 # coding:utf-8
-import urllib2
-import thread
+from urllib import request
+from urllib import error
+
+import _thread as thread
 import time
 import pymongo
 import sys
@@ -88,10 +90,10 @@ class vulscan():
             self.task_netloc[0] + ":" + \
             str(self.task_netloc[1]) + self.plugin_info['plugin']['url']
         if self.plugin_info['plugin']['method'] == 'GET':
-            request = urllib2.Request(url)
+            urequest = request.Request(url)
         else:
-            request = urllib2.Request(url, self.plugin_info['plugin']['data'])
-        self.poc_request = request
+            urequest = request.Request(url, self.plugin_info['plugin']['data'])
+        self.poc_request = urequest
 
     def get_code(self, header, html):
         try:
@@ -112,15 +114,15 @@ class vulscan():
 
     def poc_check(self):
         try:
-            res = urllib2.urlopen(self.poc_request, timeout=30)
+            res = request.urlopen(self.poc_request, timeout=30)
             res_html = res.read(204800)
             header = res.headers
             # res_code = res.code
-        except urllib2.HTTPError, e:
+        except error.HTTPError as e:
             # res_code = e.code
             header = e.headers
             res_html = e.read(204800)
-        except Exception, e:
+        except Exception:
             return
         try:
             html_code = self.get_code(header, res_html).strip()
@@ -165,7 +167,7 @@ class vulscan():
         lock.acquire()
         try:
             time_str = time.strftime('%X', time.localtime(time.time()))
-            print "[%s] %s" % (time_str, info)
+            print("[%s] %s" % (time_str, info))
         except:
             pass
         lock.release()
@@ -242,8 +244,8 @@ def get_config():
         timeout = int(timeout_row['value'])
         white_list = white_row['value'].split('\n')
         return password_dic, thread_count, timeout, white_list
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
 
 def install_kunpeng_plugin():
     time_ = datetime.datetime.now()
@@ -263,7 +265,7 @@ def install_kunpeng_plugin():
             'filename': plugin['references']['kpid'],
             'count': 0
         }
-        na_plugin.insert(plugin_info)
+        na_plugin.insert_one(plugin_info)
 
 def init():
     time_ = datetime.datetime.now()
@@ -271,7 +273,7 @@ def init():
         return
     script_plugin = []
     json_plugin = []
-    print 'init plugins'
+    print('init plugins')
     file_list = os.listdir(sys.path[0] + '/vuldb')
     for filename in file_list:
         try:
@@ -309,7 +311,7 @@ def kp_check():
     while True:
         try:
             new_release = kp.check_version()
-            print new_release
+            print(new_release)
             if new_release:
                 info = new_release['body']
                 if '###' in new_release['body']:
@@ -325,10 +327,10 @@ def kp_check():
                     'coverage': 0,
                     'source': 'kunpeng'
                 }
-                na_update.insert(row)
+                na_update.insert_one(row)
                 time.sleep(60 * 60 * 48)
         except Exception as e:
-            print e
+            print(e)
         time.sleep(60 * 30)
 
 
@@ -342,7 +344,7 @@ def kp_update():
                 na_plugin.delete_many({'_id':re.compile('^KP')})
                 install_kunpeng_plugin()
         except Exception as e:
-            print e
+            print(e)
         time.sleep(10)
 
 
@@ -370,11 +372,11 @@ if __name__ == '__main__':
                             thread.start_new_thread(
                                 vulscan, (task_id, task_netloc, task_plugin))
                         except Exception as e:
-                            print e
+                            print(e)
                         break
                     else:
                         time.sleep(2)
             if task_plan == 0:
                 na_task.update({"_id": task_id}, {"$set": {"status": 2}})
         except Exception as e:
-            print e
+            print(e)

@@ -1,6 +1,6 @@
 # coding:utf-8
-import mongo
-import log
+import lib.log as log
+import lib.db as mongo
 import socket
 import datetime
 import requests

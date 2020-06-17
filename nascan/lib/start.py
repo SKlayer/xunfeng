@@ -2,9 +2,9 @@
 import sys
 import queue as Queue
 import threading
-import scan
-import icmp
-import cidr
+import lib.scan as scan
+import lib.icmp as icmp
+import lib.cidr as cidr
 
 AC_PORT_LIST = {}
 MASSCAN_AC = 0

@@ -6,7 +6,7 @@ from importlib import reload
 reload(sys)
 
 
-sys.setdefaultencoding('utf8')
+#sys.setdefaultencoding('utf8')
 mutex = threading.Lock()
 def write(scan_type, host, port, info):
     mutex.acquire()

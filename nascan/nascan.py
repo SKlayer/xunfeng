@@ -4,8 +4,14 @@ import _thread as thread
 import time
 from lib.common import *
 from lib.start import *
+import traceback
+
+
+
 if __name__ == "__main__":
     try:
+        First = True
+
         CONFIG_INI = get_config()  # 读取配置
         log.write('info', None, 0, u'获取配置成功')
         STATISTICS = get_statistics()  # 读取统计信息
@@ -25,7 +31,7 @@ if __name__ == "__main__":
             cy_day, ac_hour = CONFIG_INI['Cycle'].split('|')
             log.write('info', None, 0, u'扫描规则: ' + str(CONFIG_INI['Cycle']))
             # 判断是否进入扫描时段
-            if (now_hour == int(ac_hour) and now_day % int(cy_day) == 0 and now_date not in ac_data) or NACHANGE[0]:
+            if (now_hour == int(ac_hour) and now_day % int(cy_day) == 0 and now_date not in ac_data) or NACHANGE[0] or First:
                 ac_data.append(now_date)
                 NACHANGE[0] = 0
                 log.write('info', None, 0, u'开始扫描')
@@ -33,6 +39,9 @@ if __name__ == "__main__":
                 s.masscan_ac = MASSCAN_AC
                 s.statistics = STATISTICS
                 s.run()
+
             time.sleep(60)
+            first = False
     except Exception as e:
+        traceback.print_exc()
         print(e)

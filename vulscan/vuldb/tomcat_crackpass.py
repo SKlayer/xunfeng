@@ -1,6 +1,10 @@
 # coding:utf-8
 # author:wolf
-import urllib2
+from urllib.request import urlopen
+from urllib.request import Request
+from urllib.request import build_opener
+from urllib.request import HTTPCookieProcessor
+from urllib.error import HTTPError, URLError
 import base64
 
 
@@ -27,22 +31,22 @@ def check(ip, port, timeout):
             try:
                 pass_ = str(pass_.replace('{user}', user))
                 login_url = 'http://' + ip + ":" + str(port) + '/manager/html'
-                request = urllib2.Request(login_url)
+                request = Request(login_url)
                 auth_str_temp = user + ':' + pass_
                 auth_str = base64.b64encode(auth_str_temp)
                 request.add_header('Authorization', 'Basic ' + auth_str)
-                res = urllib2.urlopen(request, timeout=timeout)
+                res = urlopen(request, timeout=timeout)
                 res_code = res.code
                 res_html = res.read()
-            except urllib2.HTTPError, e:
+            except HTTPError as e:
                 res_code = e.code
                 res_html = e.read()
-            except urllib2.URLError, e:
+            except URLError:
                 error_i += 1
                 if error_i >= 3: return
                 continue
             if int(res_code) == 404: return
             if int(res_code) == 401 or int(res_code) == 403: continue
             for flag in flag_list:
-                if flag in res_html:
+                if flag.encode() in res_html:
                     return u'Tomcat弱口令 %s:%s' % (user, pass_)

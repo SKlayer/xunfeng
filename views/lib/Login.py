@@ -8,7 +8,7 @@ def logincheck(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         try:
-            if session.has_key('login'):
+            if 'login' in session:
                 if session['login'] == 'loginsuccess':
                     return f(*args, **kwargs)
                 else:

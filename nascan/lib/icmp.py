@@ -5,7 +5,7 @@ import struct
 import os
 import time
 import array
-import log
+import lib.log as log
 
 class SendPingThr(threading.Thread):
     def __init__(self, ipPool, icmpPacket, icmpSocket, timeout=3):

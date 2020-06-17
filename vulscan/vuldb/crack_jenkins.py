@@ -1,6 +1,11 @@
 # coding:utf-8
 # author:wolf
-import urllib2
+from urllib.request import urlopen
+from urllib.request import Request
+from urllib.request import build_opener
+from urllib.request import HTTPCookieProcessor
+from urllib.error import HTTPError, URLError
+
 import re
 import json
 
@@ -19,7 +24,7 @@ def get_plugin_info():
 
 def get_user_list(url,timeout):
     user_list = []
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+    opener = build_opener(HTTPCookieProcessor())
     try:
         req = opener.open(url + "/asynchPeople/", timeout=timeout)
         res_html = req.read()
@@ -29,14 +34,14 @@ def get_user_list(url,timeout):
     if m:
         user_url = url + m.group(1)
         crumb = m.group(2)
-        request = urllib2.Request(user_url+"/start","[]")
+        request = Request(user_url+"/start","[]".encode())
         set_request(request,crumb)
         try:
             opener.open(request, timeout=timeout)
         except:
             pass
         while True:
-            request = urllib2.Request(user_url+"/news","[]")
+            request = Request(user_url+"/news","[]".encode())
             set_request(request,crumb)
             user_data = opener.open(request, timeout=timeout).read()
             if len(user_data) >=20:
@@ -59,23 +64,23 @@ def crack(url,user_list,timeout):
             try:
                 login_url = url + '/j_acegi_security_check'
                 PostStr = 'j_username=%s&j_password=%s' % (user, password)
-                request = urllib2.Request(login_url, PostStr)
-                res = urllib2.urlopen(request, timeout=timeout)
+                request = Request(login_url, PostStr.encode())
+                res = urlopen(request, timeout=timeout)
                 if res.code == 200 and "X-Jenkins" in res.headers:
                     info = u'存在弱口令，用户名：%s，密码：%s' % (user, password)
                     return info
-            except urllib2.HTTPError, e:
+            except HTTPError:
                 continue
-            except urllib2.URLError, e:
+            except URLError:
                 error_i += 1
                 if error_i >= 3:
                     return
 def check(host, port, timeout):
     url = "http://%s:%d" % (host, int(port))
     try:
-        res_html = urllib2.urlopen(url,timeout=timeout).read()
-    except urllib2.HTTPError, e:
-        res_html = e.read()
+        res_html = urlopen(url,timeout=timeout).read()
+    except HTTPError as e:
+        res_html = e.read().decode()
     if "/asynchPeople/" in res_html:
         if '"/manage" class="task-link' in res_html:
             return u"未授权访问且为管理员权限"

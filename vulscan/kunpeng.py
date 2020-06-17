@@ -50,7 +50,8 @@ class kunpeng:
         else:
             return
 
-
+    def check_version(self):
+        return self._get_release_latest()
 
 
 
